@@ -22,6 +22,10 @@ import {
   Maximize2 
 } from 'lucide-react';
 
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Switch } from './ui/switch';
+
 interface CanvasNodeProps {
   node: CanvasNode;
   theme: ThemeSettings;
@@ -345,25 +349,6 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
   const renderContent = () => {
     switch (node.type) {
       case 'button': {
-        let variantClass = `${getThemeClass('bgActive')} ${getThemeClass('textPrimaryBtn')} ${getThemeClass('bgActiveHover')} shadow-sm`;
-        if (props.bgColor || props.textColor || props.customClass) {
-          variantClass = 'shadow-2xs border border-transparent/10';
-        } else {
-          if (props.variant === 'secondary') {
-            variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} ${getThemeClass('bgHover')} border-none`;
-          } else if (props.variant === 'outline') {
-            variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')} ${getThemeClass('bgHover')}`;
-          } else if (props.variant === 'ghost') {
-            variantClass = `${getThemeClass('bgHover')} ${getThemeClass('textTitle')} border-none`;
-          } else if (props.variant === 'destructive') {
-            variantClass = 'bg-red-500 text-white hover:bg-red-650 dark:bg-red-700 dark:hover:bg-red-800';
-          }
-        }
-
-        let sizeClass = 'h-9 px-4 text-sm';
-        if (props.size === 'sm') sizeClass = 'h-8 px-3 text-xs';
-        else if (props.size === 'lg') sizeClass = 'h-10 px-6 text-base';
-
         // Direct clicking in play mode can mock firing notifications or alerts
         const handleBtnClick = () => {
           if (mode === 'play') {
@@ -375,14 +360,30 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
           }
         };
 
+        const mapVariant = () => {
+          if (props.variant === 'secondary') return 'secondary';
+          if (props.variant === 'outline') return 'outline';
+          if (props.variant === 'ghost') return 'ghost';
+          if (props.variant === 'destructive') return 'destructive';
+          return 'default';
+        };
+
+        const mapSize = () => {
+          if (props.size === 'sm') return 'sm';
+          if (props.size === 'lg') return 'lg';
+          return 'default';
+        };
+
         return (
-          <button
+          <Button
             onClick={handleBtnClick}
             disabled={props.disabled}
-            className={`inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-1 ${getThemeClass('ring')} select-none cursor-pointer w-full h-full ${radius} ${variantClass} ${sizeClass}`}
+            variant={mapVariant()}
+            size={mapSize()}
+            className={`w-full h-full select-none cursor-pointer ${radius} ${getCustomStyleOverrides()}`}
           >
             {renderEditableText('label', 'Action Button', 'font-medium text-xs')}
-          </button>
+          </Button>
         );
       }
 
@@ -423,47 +424,31 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       }
 
       case 'badge': {
-        let variantClass = `${getThemeClass('bgActive')} ${getThemeClass('textPrimaryBtn')} ${getThemeClass('bgActiveHover')} border-transparent`;
-        if (props.bgColor || props.textColor || props.customClass) {
-          variantClass = 'border-transparent';
-        } else {
-          if (props.variant === 'secondary') {
-            variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} border-transparent`;
-          } else if (props.variant === 'outline') {
-            variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')}`;
-          } else if (props.variant === 'destructive') {
-            variantClass = 'bg-red-500 text-white border-transparent dark:bg-red-700 dark:text-red-100';
-          }
-        }
+        const mapVariant = () => {
+          if (props.variant === 'secondary') return 'secondary';
+          if (props.variant === 'outline') return 'outline';
+          if (props.variant === 'destructive') return 'destructive';
+          return 'default';
+        };
 
         return (
-          <span className={`inline-flex items-center justify-center text-xs font-semibold select-none border px-2.5 py-0.5 whitespace-nowrap leading-none transition-colors border ${radius} ${variantClass}`}>
+          <Badge
+            variant={mapVariant()}
+            className={`whitespace-nowrap select-none ${radius} ${getCustomStyleOverrides()}`}
+          >
             {renderEditableText('label', 'New Status', 'font-semibold text-xs')}
-          </span>
+          </Badge>
         );
       }
 
       case 'switch': {
-        const toggleSwitch = () => {
-          if (mode === 'play') {
-            setIsChecked(!isChecked);
-          }
-        };
-
         return (
-          <div className="flex items-center space-x-3.5 py-1 select-none">
-            <button
-              type="button"
-              role="switch"
-              onClick={toggleSwitch}
-              className={`inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 ${getThemeClass('ring')} ${
-                isChecked ? getThemeClass('bgActive') : 'bg-zinc-200 dark:bg-zinc-800'
-              }`}
-            >
-              <span className={`pointer-events-none block h-4 w-4 rounded-full bg-white dark:bg-zinc-950 shadow-md ring-0 transition-transform ${
-                isChecked ? 'translate-x-4' : 'translate-x-0'
-              }`} />
-            </button>
+          <div className="flex items-center space-x-3.5 py-1 select-none text-left">
+            <Switch
+              checked={isChecked}
+              onCheckedChange={mode === 'play' ? setIsChecked : undefined}
+              disabled={mode !== 'play'}
+            />
             <span className={`text-sm font-medium leading-none ${getThemeClass('textBody')}`}>
               {renderEditableText('label', 'Toggled option', 'text-sm font-medium')}
             </span>
