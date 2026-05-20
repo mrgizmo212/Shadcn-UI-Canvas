@@ -1,0 +1,6 @@
+{
+  "name": "Infinite Canvas Shadcn Builder",
+  "description": "An interactive, infinite canvas workspace where you can drag, drop, arrange, and configure high-fidelity Shadcn UI components to build responsive layouts and download production-ready React JSX code.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
