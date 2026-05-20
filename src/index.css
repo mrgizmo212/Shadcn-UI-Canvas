@@ -22,8 +22,39 @@ input:focus, textarea:focus, select:focus {
   outline: none;
 }
 
+/* Ensure select elements themselves style with current mode background & text borders */
+select {
+  background-color: #ffffff !important;
+  color: #0d0d10 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.dark select {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+  border-color: #27272a !important;
+}
+
+/* Force option tags to always style as deep slate-900 on white background.
+   This resolves invisible/white options on macOS/Windows native popups. */
+select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* Micro smooth-scrolling and transitions */
 .smooth-viewport {
   transition: transform 0.05s ease-out;
+}
+
+/* AI Copilot sweeping gradient loading animation */
+@keyframes sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-loading-bar-sweep {
+  animation: sweep 2.5s ease infinite;
 }
 

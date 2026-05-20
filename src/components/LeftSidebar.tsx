@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { TOOL_ITEMS, LAYOUT_TEMPLATES } from '../componentsData';
 import { ComponentType, ToolItem } from '../types';
-import { Search, Sparkles, BookOpen, Layers, Plus, Compass } from 'lucide-react';
+import { Search, Sparkles, BookOpen, Layers, Plus, Compass, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface LeftSidebarProps {
   onAddNode: (type: ComponentType) => void;
@@ -23,6 +23,18 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeCatalog, setActiveCatalog] = useState<'components' | 'templates'>('components');
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
+    'Elements': true,
+    'Overlays': true,
+    'Layout Shells': true,
+  });
+
+  const toggleCategory = (cat: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [cat]: !prev[cat],
+    }));
+  };
 
   // Filter components based on search query
   const filteredItems = TOOL_ITEMS.filter((item) => {
@@ -104,57 +116,70 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           categories.map((cat) => {
             const itemsInCat = filteredItems.filter((i) => i.category === cat);
             if (itemsInCat.length === 0) return null;
+            const isCollapsed = collapsedCategories[cat];
 
             return (
               <div key={cat} className="space-y-2.5 text-left">
-                <div className="flex items-center gap-1.5 border-b border-zinc-150 dark:border-zinc-900 pb-1.5">
-                  <span className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 tracking-widest uppercase">
-                    {cat}
-                  </span>
-                  <span className="text-[10px] bg-zinc-100 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-400 font-bold px-1.5 py-0.5 rounded-full leading-none">
-                    {itemsInCat.length}
-                  </span>
+                <div 
+                  onClick={() => toggleCategory(cat)}
+                  className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-900 pb-1.5 cursor-pointer hover:opacity-80 active:scale-99 transition-all select-none group"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 tracking-widest uppercase group-hover:text-zinc-600 dark:group-hover:text-zinc-350 transition-colors">
+                      {cat}
+                    </span>
+                    <span className="text-[10px] bg-zinc-100 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-400 font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {itemsInCat.length}
+                    </span>
+                  </div>
+                  {isCollapsed ? (
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-350 transition-colors" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-350 transition-colors" />
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 border-0 bg-transparent">
-                  {itemsInCat.map((item) => (
-                    <div
-                      key={item.type}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', item.type);
-                        e.dataTransfer.effectAllowed = 'copy';
-                        onDragStartItem(item.type);
-                      }}
-                      className="group p-3 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900/40 rounded-lg shadow-3xs cursor-grab active:cursor-grabbing transition-all flex flex-col items-start relative select-none"
-                    >
-                      {/* Grid overlay coordinates decoration */}
-                      <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 group-hover:bg-zinc-400 dark:group-hover:bg-zinc-200 transition-colors" />
+                {!isCollapsed && (
+                  <div className="grid grid-cols-1 gap-2 border-0 bg-transparent animate-in fade-in duration-200">
+                    {itemsInCat.map((item) => (
+                      <div
+                        key={item.type}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', item.type);
+                          e.dataTransfer.effectAllowed = 'copy';
+                          onDragStartItem(item.type);
+                        }}
+                        className="group p-3 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900/40 rounded-lg shadow-3xs cursor-grab active:cursor-grabbing transition-all flex flex-col items-start relative select-none"
+                      >
+                        {/* Grid overlay coordinates decoration */}
+                        <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 group-hover:bg-zinc-400 dark:group-hover:bg-zinc-200 transition-colors" />
 
-                      <div className="w-full flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-850 pb-1 mb-1.5">
-                        <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
-                          {item.name}
-                        </span>
-                        
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddNode(item.type);
-                          }}
-                          title="Instant compile to center"
-                          className="px-1.5 py-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer border border-transparent transition-colors bg-transparent"
-                        >
-                          Add +
-                        </button>
+                        <div className="w-full flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-850 pb-1 mb-1.5">
+                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+                            {item.name}
+                          </span>
+                          
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddNode(item.type);
+                            }}
+                            title="Instant compile to center"
+                            className="px-1.5 py-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer border border-transparent transition-colors bg-transparent"
+                          >
+                            Add +
+                          </button>
+                        </div>
+
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 leading-relaxed font-semibold self-stretch">
+                          {item.description}
+                        </p>
                       </div>
-
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 leading-relaxed font-semibold self-stretch">
-                        {item.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })

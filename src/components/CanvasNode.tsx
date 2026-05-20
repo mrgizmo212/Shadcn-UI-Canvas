@@ -35,6 +35,9 @@ interface CanvasNodeProps {
   onDetach?: (id: string) => void;
   onResizeStart?: (e: React.MouseEvent) => void;
   children?: React.ReactNode;
+  allNodes?: CanvasNode[];
+  onSelectNodeIds?: (ids: string[]) => void;
+  onUpdateNode?: (nodeId: string, updates: Partial<CanvasNode>) => void;
 }
 
 export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
@@ -50,6 +53,9 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
   onDetach,
   onResizeStart,
   children,
+  allNodes,
+  onSelectNodeIds,
+  onUpdateNode,
 }) => {
   const props = node.properties;
 
@@ -64,6 +70,76 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
   const [radioSelected, setRadioSelected] = useState<string>(props.selected || '');
   const [selectSelected, setSelectSelected] = useState<string>(props.selected || '');
   const [isActiveSelectOpen, setIsActiveSelectOpen] = useState<boolean>(false);
+
+  // Granular inline text editing states
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editText, setEditText] = useState<string>('');
+
+  const startEditing = (field: string, initialValue: string) => {
+    if (mode !== 'design') return;
+    setEditingField(field);
+    setEditText(initialValue);
+  };
+
+  const saveEditing = () => {
+    if (editingField && onUpdateNode) {
+      const updatedProps = { ...props, [editingField]: editText };
+      onUpdateNode(node.id, { properties: updatedProps });
+    }
+    setEditingField(null);
+  };
+
+  const renderEditableText = (field: string, defaultValue: string, className: string, isTextarea = false) => {
+    const val = props[field] !== undefined ? props[field] : defaultValue;
+    if (mode === 'design' && editingField === field) {
+      if (isTextarea) {
+        return (
+          <textarea
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={saveEditing}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEditing(); }
+              if (e.key === 'Escape') setEditingField(null);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full text-xs font-normal border border-blue-500 rounded p-1 bg-white dark:bg-zinc-950 text-black dark:text-white focus:outline-hidden pointer-events-auto"
+            autoFocus
+          />
+        );
+      }
+      return (
+        <input
+          type="text"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={saveEditing}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') saveEditing();
+            if (e.key === 'Escape') setEditingField(null);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-full text-xs font-normal border border-blue-500 rounded px-1.5 py-0.5 bg-white dark:bg-[#09090b] text-black dark:text-white focus:outline-hidden pointer-events-auto"
+          autoFocus
+        />
+      );
+    }
+
+    return (
+      <span
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          startEditing(field, val);
+        }}
+        title="Double-click to edit text"
+        className={`${className} cursor-text hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 rounded px-1.5 py-0.5 transition-all duration-150 pointer-events-auto inline-block min-w-[20px]`}
+      >
+        {val}
+      </span>
+    );
+  };
 
   // Synchronize local states with node properties when properties change in panel
   useEffect(() => {
@@ -202,6 +278,66 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
     return themes[role]?.[c] || themes[role]?.['zinc'];
   };
 
+  // Dynamic design system override classes (text, background, border styles)
+  const getCustomStyleOverrides = () => {
+    let classes = '';
+
+    // Text style overrides
+    if (props.textColor) {
+      if (props.textColor.startsWith('text-')) {
+        classes += ` ${props.textColor}`;
+      } else {
+        const textColors: Record<string, string> = {
+          default: '',
+          red: 'text-red-650 dark:text-red-400',
+          green: 'text-green-650 dark:text-green-400',
+          blue: 'text-blue-600 dark:text-blue-400',
+          yellow: 'text-amber-600 dark:text-amber-450',
+          purple: 'text-purple-650 dark:text-purple-400',
+          orange: 'text-orange-600 dark:text-orange-400',
+          pink: 'text-pink-600 dark:text-pink-400',
+          teal: 'text-teal-650 dark:text-teal-400',
+          white: 'text-white dark:text-white',
+          dark: 'text-zinc-950 dark:text-zinc-50',
+          zinc: 'text-zinc-700 dark:text-zinc-350'
+        };
+        classes += ` ${textColors[props.textColor] || ''}`;
+      }
+    }
+
+    // Background and border style overrides
+    if (props.bgColor) {
+      if (props.bgColor.startsWith('bg-')) {
+        classes += ` ${props.bgColor}`;
+      } else {
+        const bgColors: Record<string, string> = {
+          default: '',
+          white: 'bg-white dark:bg-zinc-950',
+          zinc: 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-850',
+          slate: 'bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-850',
+          neutral: 'bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850',
+          stone: 'bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-850',
+          red: 'bg-red-50/75 border border-red-200 text-red-650 dark:bg-red-950/20 dark:border-red-900/30 dark:text-red-400',
+          green: 'bg-green-50/75 border border-green-200 text-green-755 dark:bg-green-950/20 dark:border-green-900/30 dark:text-green-400',
+          blue: 'bg-blue-50/75 border border-blue-200 text-blue-755 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400',
+          yellow: 'bg-amber-50/75 border border-amber-200 text-amber-700 dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-450',
+          purple: 'bg-purple-50/75 border border-purple-200 text-purple-750 dark:bg-purple-950/20 dark:border-purple-900/30 dark:text-purple-400',
+          orange: 'bg-orange-50/75 border border-orange-200 text-orange-750 dark:bg-orange-950/20 dark:border-orange-900/30 dark:text-orange-400',
+          teal: 'bg-teal-50/75 border border-teal-200 text-teal-750 dark:bg-teal-950/20 dark:border-teal-900/30 dark:text-teal-400',
+          zincActive: 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 border-transparent',
+          indigoActive: 'bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white border-transparent'
+        };
+        classes += ` ${bgColors[props.bgColor] || ''}`;
+      }
+    }
+
+    if (props.customClass) {
+      classes += ` ${props.customClass}`;
+    }
+
+    return classes;
+  };
+
   // Theme color modifiers for active components
   const activeBg = `${getThemeClass('bgActive')} ${getThemeClass('textPrimaryBtn')}`;
   const activeBorder = getThemeClass('borderActive');
@@ -210,14 +346,18 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
     switch (node.type) {
       case 'button': {
         let variantClass = `${getThemeClass('bgActive')} ${getThemeClass('textPrimaryBtn')} ${getThemeClass('bgActiveHover')} shadow-sm`;
-        if (props.variant === 'secondary') {
-          variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} ${getThemeClass('bgHover')} border-none`;
-        } else if (props.variant === 'outline') {
-          variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')} ${getThemeClass('bgHover')}`;
-        } else if (props.variant === 'ghost') {
-          variantClass = `${getThemeClass('bgHover')} ${getThemeClass('textTitle')} border-none`;
-        } else if (props.variant === 'destructive') {
-          variantClass = 'bg-red-500 text-white hover:bg-red-650 dark:bg-red-700 dark:hover:bg-red-800';
+        if (props.bgColor || props.textColor || props.customClass) {
+          variantClass = 'shadow-2xs border border-transparent/10';
+        } else {
+          if (props.variant === 'secondary') {
+            variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} ${getThemeClass('bgHover')} border-none`;
+          } else if (props.variant === 'outline') {
+            variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')} ${getThemeClass('bgHover')}`;
+          } else if (props.variant === 'ghost') {
+            variantClass = `${getThemeClass('bgHover')} ${getThemeClass('textTitle')} border-none`;
+          } else if (props.variant === 'destructive') {
+            variantClass = 'bg-red-500 text-white hover:bg-red-650 dark:bg-red-700 dark:hover:bg-red-800';
+          }
         }
 
         let sizeClass = 'h-9 px-4 text-sm';
@@ -241,7 +381,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
             disabled={props.disabled}
             className={`inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-1 ${getThemeClass('ring')} select-none cursor-pointer w-full h-full ${radius} ${variantClass} ${sizeClass}`}
           >
-            {props.label || 'Action Button'}
+            {renderEditableText('label', 'Action Button', 'font-medium text-xs')}
           </button>
         );
       }
@@ -250,7 +390,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
         return (
           <div className="grid w-full gap-1.5 p-1">
             <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none text-left`}>
-              {props.label || 'Input Parameter'}
+              {renderEditableText('label', 'Input Parameter', 'font-semibold text-xs')}
             </label>
             <input
               type={props.type || 'text'}
@@ -268,7 +408,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
         return (
           <div className="grid w-full gap-1.5 p-1">
             <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none text-left`}>
-              {props.label || 'Description Textarea'}
+              {renderEditableText('label', 'Description Textarea', 'font-semibold text-xs')}
             </label>
             <textarea
               disabled={mode === 'design'}
@@ -284,17 +424,21 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
       case 'badge': {
         let variantClass = `${getThemeClass('bgActive')} ${getThemeClass('textPrimaryBtn')} ${getThemeClass('bgActiveHover')} border-transparent`;
-        if (props.variant === 'secondary') {
-          variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} border-transparent`;
-        } else if (props.variant === 'outline') {
-          variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')}`;
-        } else if (props.variant === 'destructive') {
-          variantClass = 'bg-red-500 text-white border-transparent dark:bg-red-700 dark:text-red-100';
+        if (props.bgColor || props.textColor || props.customClass) {
+          variantClass = 'border-transparent';
+        } else {
+          if (props.variant === 'secondary') {
+            variantClass = `${getThemeClass('bgMuted')} ${getThemeClass('textTitle')} border-transparent`;
+          } else if (props.variant === 'outline') {
+            variantClass = `border ${getThemeClass('border')} bg-transparent ${getThemeClass('textTitle')}`;
+          } else if (props.variant === 'destructive') {
+            variantClass = 'bg-red-500 text-white border-transparent dark:bg-red-700 dark:text-red-100';
+          }
         }
 
         return (
           <span className={`inline-flex items-center justify-center text-xs font-semibold select-none border px-2.5 py-0.5 whitespace-nowrap leading-none transition-colors border ${radius} ${variantClass}`}>
-            {props.label || 'New Status'}
+            {renderEditableText('label', 'New Status', 'font-semibold text-xs')}
           </span>
         );
       }
@@ -321,7 +465,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
               }`} />
             </button>
             <span className={`text-sm font-medium leading-none ${getThemeClass('textBody')}`}>
-              {props.label || 'Toggled option'}
+              {renderEditableText('label', 'Toggled option', 'text-sm font-medium')}
             </span>
           </div>
         );
@@ -336,8 +480,8 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
         return (
           <div className="grid w-full gap-2 p-1 text-left">
-            <div className={`flex justify-between text-xs font-semibold ${getThemeClass('textMuted')} select-none`}>
-              <span>{props.label || 'Adjust quantitative'}</span>
+            <div className={`flex justify-between text-xs font-semibold ${getThemeClass('textMuted')} select-none items-center`}>
+              <span>{renderEditableText('label', 'Adjust quantitative', 'text-xs font-semibold')}</span>
               <span className={`font-mono ${getThemeClass('textBody')}`}>{sliderVal}%</span>
             </div>
             <div className="relative flex w-full touch-none select-none items-center">
@@ -375,7 +519,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
               {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
             </div>
             <label className={`text-xs font-medium leading-tight ${getThemeClass('textBody')} ${mode === 'play' ? 'cursor-pointer' : ''}`}>
-              {props.label || 'Form checkbox description'}
+              {renderEditableText('label', 'Form checkbox description', 'text-xs font-medium')}
             </label>
           </div>
         );
@@ -388,9 +532,9 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
         
         return (
           <div className="grid gap-2.5 p-1 text-left w-full">
-            {props.label && (
+            {props.label !== undefined && (
               <span className={`text-xs font-semibold ${getThemeClass('textMuted')} select-none`}>
-                {props.label}
+                {renderEditableText('label', 'Choose plan tier:', 'text-xs font-semibold')}
               </span>
             )}
             <div className="grid gap-2">
@@ -431,7 +575,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       case 'label': {
         return (
           <h4 className={`text-xs font-bold tracking-wider ${getThemeClass('textMuted')} uppercase select-none text-left p-0.5`}>
-            {props.text || 'Section Header Landmark'}
+            {renderEditableText('text', 'Section Header Landmark', 'text-xs font-bold tracking-wider uppercase')}
           </h4>
         );
       }
@@ -457,9 +601,9 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
         return (
           <div className={`grid w-full gap-1.5 p-1 text-left relative ${getThemeClass('textBody')}`}>
-            {props.label && (
+            {props.label !== undefined && (
               <label className={`text-xs font-semibold ${getThemeClass('textMuted')} select-none`}>
-                {props.label}
+                {renderEditableText('label', 'Theme Selection', 'text-xs font-semibold')}
               </label>
             )}
             <div
@@ -519,8 +663,8 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       case 'progress': {
         return (
           <div className={`grid w-full gap-1 p-1 text-left ${getThemeClass('textBody')}`}>
-            <div className={`flex justify-between text-xs font-semibold ${getThemeClass('textMuted')} select-none`}>
-              <span>{props.label || 'Progress Meter'}</span>
+            <div className={`flex justify-between text-xs font-semibold ${getThemeClass('textMuted')} select-none items-center`}>
+              <span>{renderEditableText('label', 'Progress Meter', 'text-xs font-semibold')}</span>
               <span className={`font-mono ${getThemeClass('textBody')}`}>{sliderVal}%</span>
             </div>
             <div className={`w-full h-2 rounded ${getThemeClass('bgMuted')} overflow-hidden`}>
@@ -561,23 +705,28 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
       case 'alert': {
         const isDestructive = props.variant === 'destructive';
+        const containerStyle = (props.bgColor || props.textColor || props.customClass)
+          ? `relative w-full p-4 text-left shadow-2xs border ${radius}`
+          : `relative w-full border ${radius} p-4 text-left shadow-sm ${
+              isDestructive 
+                ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400' 
+                : `${getThemeClass('border')} bg-white dark:bg-zinc-950/50 ${getThemeClass('textTitle')}`
+            }`;
         
         return (
-          <div className={`relative w-full border ${radius} p-4 text-left shadow-sm ${
-            isDestructive 
-              ? 'border-red-200 bg-red-50/20 text-red-700 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400' 
-              : `${getThemeClass('border')} bg-white dark:bg-zinc-950/50 ${getThemeClass('textTitle')}`
-          }`}>
+          <div className={containerStyle}>
             <div className="flex gap-3 items-start">
               {isDestructive ? (
                 <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
               ) : (
                 <Info className={`w-5 h-5 ${getThemeClass('textMuted')} shrink-0`} />
               )}
-              <div className="space-y-1">
-                <h5 className="font-semibold text-sm leading-none">{props.title || 'Sandbox System Update'}</h5>
+              <div className="space-y-1 w-full text-left">
+                <h5 className="font-semibold text-sm leading-none">
+                  {renderEditableText('title', 'Sandbox System Update', 'font-semibold text-sm leading-none')}
+                </h5>
                 <p className={`text-xs ${getThemeClass('textMuted')} leading-normal font-normal`}>
-                  {props.description || 'Provide general status indicators of the sandbox server.'}
+                  {renderEditableText('description', 'Provide general status indicators of the sandbox server.', 'text-xs font-normal', true)}
                 </p>
               </div>
             </div>
@@ -586,14 +735,18 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       }
 
       case 'card': {
+        const bgBorderClass = (props.bgColor || props.textColor || props.customClass)
+          ? 'shadow-xs flex flex-col text-left overflow-hidden h-full w-full border border-transparent/10'
+          : `border ${getThemeClass('border')} bg-white dark:bg-zinc-950 shadow-sm flex flex-col text-left overflow-hidden h-full w-full`;
+        
         return (
-          <div className={`border ${getThemeClass('border')} bg-white dark:bg-zinc-950 shadow-sm flex flex-col text-left overflow-hidden h-full w-full ${radius}`}>
+          <div className={`${bgBorderClass} ${radius}`}>
             <div className={`flex flex-col space-y-1.5 p-4 md:p-6 pb-4 border-b ${getThemeClass('border')}`}>
               <h3 className={`font-bold text-lg leading-none tracking-tight ${getThemeClass('textTitle')}`}>
-                {props.title || 'Visual Widget'}
+                {renderEditableText('title', 'Visual Widget', 'font-bold text-lg leading-none tracking-tight')}
               </h3>
               <p className={`text-xs ${getThemeClass('textMuted')} font-medium`}>
-                {props.description || 'Widget container descriptor instructions.'}
+                {renderEditableText('description', 'Widget container descriptor instructions.', 'text-xs font-medium', true)}
               </p>
             </div>
             
@@ -609,7 +762,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
             {props.showFooter && (
               <div className={`px-6 py-3 border-t ${getThemeClass('border')} text-xs ${getThemeClass('textMuted')} font-medium ${getThemeClass('bgMuted')}`}>
-                {props.footerText || 'Widget update schedule info.'}
+                {renderEditableText('footerText', 'Widget update schedule info.', 'text-xs font-medium')}
               </div>
             )}
           </div>
@@ -680,9 +833,11 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
         return (
           <div className={`overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm w-full h-full text-left flex flex-col ${radius}`}>
-            {props.title && (
+            {props.title !== undefined && (
               <div className="p-4 border-b border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-950/20">
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white">{props.title}</h4>
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {renderEditableText('title', 'Sandbox Database Table', 'font-bold text-sm')}
+                </h4>
               </div>
             )}
             <div className="flex-grow overflow-auto">
@@ -733,7 +888,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
               onClick={toggleAccordion}
               className="flex w-full items-center justify-between text-sm font-semibold py-1.5 text-slate-900 dark:text-white hover:underline cursor-pointer"
             >
-              <span>{props.title || 'Collapsible Accordion Header'}</span>
+              <span>{renderEditableText('title', 'Collapsible Accordion Header', 'text-sm font-semibold')}</span>
               <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200 ${
                 accordionExpanded ? 'rotate-180' : ''
               }`} />
@@ -742,7 +897,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
               accordionExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'
             }`}>
               <div className="overflow-hidden text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                {props.content || 'This is the expanded detail body associated with this collapsible pane toggle.'}
+                {renderEditableText('content', 'This is the expanded detail body associated with this collapsible pane toggle.', 'text-xs font-normal', true)}
               </div>
             </div>
           </div>
@@ -783,8 +938,8 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
             <div className={`border border-slate-200 dark:border-slate-800 p-4 ${radius} bg-white dark:bg-slate-950 shadow-sm flex-grow`}>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal font-medium">
                 Showing workspace content metrics for tab: <b className="text-slate-900 dark:text-white uppercase text-[11px] font-bold block mt-1">{activeTab || tabHeaders[0]}</b>
-                <span className="block mt-2 text-slate-500 border-t border-slate-100 dark:border-slate-850 pt-2 text-[11px]">
-                  {props.content || 'Modify the tabs headers and documentation lists inside the property builder panel.'}
+                <span className="block mt-2 text-slate-500 border-t border-slate-100 dark:border-slate-850 pt-2 text-[11px] w-full">
+                  {renderEditableText('content', 'Modify the tabs headers and documentation lists inside the property builder panel.', 'text-xs font-normal', true)}
                 </span>
               </p>
             </div>
@@ -803,7 +958,10 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
           return (
             <div className="border border-dashed border-slate-300 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-950/20 p-4 rounded text-center text-xs text-slate-500 w-full select-none flex flex-col gap-1">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Dialog Overlay (Hidden by Default)</span>
-              <span>Trigger modal: <b>"{props.title || 'Are you sure?'}"</b></span>
+              <div className="flex flex-col gap-2 p-1.5 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-zinc-950 mt-1 pointer-events-auto">
+                <span className="font-semibold">{renderEditableText('title', 'Are you sure?', 'font-bold text-slate-900 dark:text-white')}</span>
+                <span className="text-[11px] opacity-70">{renderEditableText('description', 'This is the simulated dialog state content.', 'text-xs font-normal', true)}</span>
+              </div>
             </div>
           );
         }
@@ -859,7 +1017,10 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
           return (
             <div className="border border-dashed border-slate-300 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-950/20 p-4 rounded text-center text-xs text-slate-500 w-full select-none flex flex-col gap-1">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Sheet Slideout (Hidden by Default)</span>
-              <span>Trigger side drawer: <b>"{props.title || 'Edit Profile'}"</b> ({props.side || 'right'})</span>
+              <div className="flex flex-col gap-2 p-1.5 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-zinc-950 mt-1 pointer-events-auto">
+                <span className="font-semibold">{renderEditableText('title', 'Edit Profile', 'font-bold text-slate-900 dark:text-white')}</span>
+                <span className="text-[11px] opacity-70">{renderEditableText('description', 'Adjust overall colors and layouts in this simulated panel setup.', 'text-xs font-normal', true)}</span>
+              </div>
             </div>
           );
         }
@@ -1021,6 +1182,21 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
   // Prevent absolute node layout wrapping if inside container
   const isNested = !!node.parentId;
 
+  // Accumulate ancestor path for granular parent container selection
+  const ancestors: CanvasNode[] = [];
+  if (allNodes) {
+    let currentParentId = node.parentId;
+    while (currentParentId) {
+      const p = allNodes.find((n) => n.id === currentParentId);
+      if (p) {
+        ancestors.unshift(p);
+        currentParentId = p.parentId;
+      } else {
+        break;
+      }
+    }
+  }
+
   // Render element wrapper
   return (
     <div
@@ -1058,7 +1234,25 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       {/* Design-only control helpers */}
       {mode === 'design' && isSelected && (
         <div className="absolute -top-7 left-0 right-0 h-6 bg-zinc-950 text-white dark:bg-white dark:text-black rounded-xs flex items-center justify-between px-1.5 shadow-xs z-[12] text-[10px] uppercase font-bold animate-in slide-in-from-bottom duration-150 pointer-events-auto">
-          <span className="truncate max-w-[120px] font-mono tracking-wide">{node.type} node</span>
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pr-2 max-w-[70%] text-[9px] font-mono lowercase">
+            {ancestors.map((anc) => (
+              <React.Fragment key={anc.id}>
+                <button
+                  type="button"
+                  title={`Select parent container: ${anc.type}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectNodeIds?.([anc.id]);
+                  }}
+                  className="hover:underline opacity-65 hover:opacity-100 cursor-pointer text-current border-0 bg-transparent px-0.5 tracking-wide text-[9px] uppercase font-bold"
+                >
+                  {anc.type}
+                </button>
+                <span className="opacity-40">/</span>
+              </React.Fragment>
+            ))}
+            <span className="truncate tracking-wide text-blue-500 dark:text-blue-400 font-bold uppercase">{node.type}</span>
+          </div>
           <div className="flex items-center gap-1">
             {isNested && (
               <>
@@ -1109,7 +1303,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
       )}
 
       {/* Actual Content Render bounds */}
-      <div className={`w-full h-full relative ${mode === 'design' ? 'pointer-events-none' : ''}`}>
+      <div className={`w-full h-full relative ${mode === 'design' ? 'pointer-events-none' : ''} ${getCustomStyleOverrides()}`}>
         {renderContent()}
       </div>
 

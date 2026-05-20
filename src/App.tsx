@@ -21,7 +21,8 @@ import {
   RotateCcw, 
   HelpCircle,
   Eye,
-  Check
+  Check,
+  ChevronRight
 } from 'lucide-react';
 
 export default function App() {
@@ -30,6 +31,10 @@ export default function App() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const selectedNodeId = selectedNodeIds.length > 0 ? selectedNodeIds[selectedNodeIds.length - 1] : null;
   const [mode, setMode] = useState<'design' | 'play'>('design');
+  
+  // Sidebar Panel Collapsing States
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState<boolean>(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(false);
   
   // Starting viewport coordinates zoomed out to view the preloaded dashboard perfectly
   const [viewport, setViewport] = useState<Viewport>({ x: 60, y: 30, zoom: 0.72 });
@@ -48,18 +53,38 @@ export default function App() {
   // Exporter overlays toggle
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
 
-  // 2. Load starting dashboard layout default on mounting
+  // History state for undoing deletions
+  const [history, setHistory] = useState<{ nodes: CanvasNode[]; selectedNodeIds: string[] }[]>([]);
+
+  const saveToHistory = (customNodes?: CanvasNode[], customSelectedIds?: string[]) => {
+    const nodesToSave = customNodes || nodes;
+    const idsToSave = customSelectedIds || selectedNodeIds;
+    setHistory((prev) => [
+      ...prev,
+      {
+        nodes: JSON.parse(JSON.stringify(nodesToSave)),
+        selectedNodeIds: [...idsToSave],
+      }
+    ]);
+  };
+
+  const handleUndo = () => {
+    setHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const copy = [...prev];
+      const prevState = copy.pop();
+      if (prevState) {
+        setNodes(prevState.nodes);
+        setSelectedNodeIds(prevState.selectedNodeIds);
+      }
+      return copy;
+    });
+  };
+
+  // 2. Load starting dashboard layout default empty on mounting
   useEffect(() => {
-    // Preload SaaS Dashboard Template
-    const template = LAYOUT_TEMPLATES.find((t) => t.name.includes('SaaS Dashboard'));
-    if (template) {
-      // Deep clone template nodes safely
-      const deepClonedNodes = template.nodes.map((n) => ({
-        ...n,
-        properties: { ...n.properties },
-      }));
-      setNodes(deepClonedNodes);
-    }
+    // Start with blank canvas
+    setNodes([]);
   }, []);
 
   // Sync index.css dark class depending on dark theme selected
@@ -134,6 +159,8 @@ export default function App() {
 
   // Delete node and clean recursively if container is wiped
   const handleDeleteNode = (nodeId: string) => {
+    saveToHistory();
+
     // Collect child nodes to remove
     const collectChildIds = (id: string, list: string[]) => {
       nodes.forEach((n) => {
@@ -273,6 +300,7 @@ export default function App() {
 
   const handleBulkDelete = () => {
     if (selectedNodeIds.length === 0) return;
+    saveToHistory();
     setNodes((prev) => {
       const collectAllChildren = (id: string, list: string[]) => {
         prev.forEach((n) => {
@@ -422,6 +450,7 @@ export default function App() {
     if (nodes.length === 0) return;
     const confirmClear = confirm('⚠️ Reset Workspace: Are you absolutely sure you want to delete all elements on the canvas?');
     if (confirmClear) {
+      saveToHistory();
       setNodes([]);
       setSelectedNodeIds([]);
     }
@@ -432,8 +461,7 @@ export default function App() {
     try {
       const parsed = JSON.parse(jsonStr);
       if (Array.isArray(parsed) && parsed.every((n) => n.id && n.type)) {
-        setNodes(parsed);
-        setSelectedNodeIds([]);
+        handleReplaceNodes(parsed);
         setViewport({ x: 100, y: 50, zoom: 0.8 });
         return true;
       }
@@ -450,6 +478,82 @@ export default function App() {
 
   const handleResetDraggedType = () => {
     setDraggedItemType(null);
+  };
+
+  const handleOnAddGeneratedNodes = (newNodes: CanvasNode[]) => {
+    const idMap: Record<string, string> = {};
+    const existingIds = new Set(nodes.map((n) => n.id));
+    const usedIdsInBatch = new Set<string>();
+
+    const processedNodes = newNodes.map((node) => {
+      let newId = node.id;
+      // If the ID is already taken by existing items, or was duplicated in this incoming batch
+      if (existingIds.has(newId) || usedIdsInBatch.has(newId)) {
+        const typePrefix = node.type;
+        const randomSuffix = Math.random().toString(36).substring(2, 7);
+        const idParts = node.id.split('-');
+        const middle = idParts.slice(1, idParts.length > 2 ? -1 : undefined).join('-') || 'element';
+        newId = `${typePrefix}-${middle}-${randomSuffix}`;
+      }
+      idMap[node.id] = newId;
+      usedIdsInBatch.add(newId);
+
+      return {
+        ...node,
+        id: newId,
+      };
+    });
+
+    // Remap parentIds
+    const finalNodes = processedNodes.map((node) => {
+      const updatedParentId = node.parentId && idMap[node.parentId] ? idMap[node.parentId] : node.parentId;
+      return {
+        ...node,
+        parentId: updatedParentId,
+        properties: node.properties ? JSON.parse(JSON.stringify(node.properties)) : {},
+      };
+    });
+
+    setNodes((prev) => [...prev, ...finalNodes]);
+    setSelectedNodeIds(finalNodes.map((n) => n.id));
+  };
+
+  const handleReplaceNodes = (newNodes: CanvasNode[]) => {
+    const idMap: Record<string, string> = {};
+    const usedIdsInBatch = new Set<string>();
+
+    const processedNodes = newNodes.map((node) => {
+      let newId = node.id;
+      // Check for internal duplicates within the replaced array
+      if (usedIdsInBatch.has(newId)) {
+        const typePrefix = node.type;
+        const randomSuffix = Math.random().toString(36).substring(2, 7);
+        const idParts = node.id.split('-');
+        const middle = idParts.slice(1, idParts.length > 2 ? -1 : undefined).join('-') || 'element';
+        newId = `${typePrefix}-${middle}-${randomSuffix}`;
+      }
+      idMap[node.id] = newId;
+      usedIdsInBatch.add(newId);
+
+      return {
+        ...node,
+        id: newId,
+      };
+    });
+
+    // Remap parentIds
+    const finalNodes = processedNodes.map((node) => {
+      const updatedParentId = node.parentId && idMap[node.parentId] ? idMap[node.parentId] : node.parentId;
+      return {
+        ...node,
+        parentId: updatedParentId,
+        properties: node.properties ? JSON.parse(JSON.stringify(node.properties)) : {},
+      };
+    });
+
+    setNodes(finalNodes);
+    // Keep selection of nodes that exist or select none
+    setSelectedNodeIds((prev) => prev.filter((id) => usedIdsInBatch.has(id)));
   };
 
   // Compile real-time export representations
@@ -543,6 +647,17 @@ export default function App() {
 
           <button
             type="button"
+            onClick={handleUndo}
+            disabled={history.length === 0}
+            className="h-9 px-3 py-1 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-850 bg-transparent text-[11px] font-bold text-zinc-500 dark:text-zinc-400 select-none cursor-pointer duration-150 flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+            title="Undo last delete (Ctrl+Z)"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Undo ({history.length})</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsExportOpen(true)}
             className="h-9 px-3.5 rounded bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-100 text-[11px] font-bold select-none cursor-pointer flex items-center gap-1.5 shadow-xs border border-zinc-800 dark:border-transparent transition-all"
           >
@@ -559,12 +674,47 @@ export default function App() {
         
         {/* LEFT COMPONENT TOOLBOX SIDEBAR (Design view only, hidden inside play preview) */}
         {mode === 'design' && (
-          <LeftSidebar
-            onAddNode={(type) => handleAddNode(type)}
-            onLoadTemplate={handleLoadTemplate}
-            onDragStartItem={handleDragStartItem}
-            nodesCount={nodes.length}
-          />
+          <div className="flex shrink-0 h-full relative z-20">
+            {!leftSidebarCollapsed ? (
+              <div className="relative flex h-full">
+                <LeftSidebar
+                  onAddNode={(type) => handleAddNode(type)}
+                  onLoadTemplate={handleLoadTemplate}
+                  onDragStartItem={handleDragStartItem}
+                  nodesCount={nodes.length}
+                />
+                {/* Small floating collapse handle button overlaying the boundary */}
+                <button
+                  type="button"
+                  onClick={() => setLeftSidebarCollapsed(true)}
+                  className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-12 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 rounded-r-md flex items-center justify-center shadow-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors z-45 border-l-0"
+                  title="Collapse toolbox"
+                  id="collapse-toolbox-btn"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 rotate-180" />
+                </button>
+              </div>
+            ) : (
+              <div 
+                className="w-11 border-r border-zinc-200 dark:border-zinc-800 bg-[#ffffff] dark:bg-[#09090b] flex flex-col items-center pt-4 shrink-0 relative transition-all duration-200 animate-in fade-in slide-in-from-left-4"
+                id="collapsed-toolbox-indicator"
+              >
+                <button
+                  type="button"
+                  onClick={() => setLeftSidebarCollapsed(false)}
+                  className="w-7 h-7 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-lg flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all text-xs font-bold"
+                  title="Expand toolbox"
+                >
+                  📦
+                </button>
+                <div className="h-full flex items-center justify-center select-none pt-12 text-center">
+                  <span className="text-[9px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase leading-none transform -rotate-90 origin-center whitespace-nowrap">
+                    SHADCN TOOLBOX
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* INFINITE DRAW PERSPECTIVE CANVAS */}
@@ -574,6 +724,7 @@ export default function App() {
           selectedNodeIds={selectedNodeIds}
           mode={mode}
           theme={theme}
+          onUpdateTheme={handleUpdateTheme}
           viewport={viewport}
           activeTool={activeTool}
           onSelectNode={handleSelectNode}
@@ -582,6 +733,7 @@ export default function App() {
           onUpdateNode={handleUpdateNode}
           onAddNode={handleAddNode}
           onDeleteNode={handleDeleteNode}
+          onBulkDelete={handleBulkDelete}
           onDuplicateNode={handleDuplicateNode}
           onMoveUpInParent={handleMoveUpInParent}
           onMoveDownInParent={handleMoveDownInParent}
@@ -589,27 +741,65 @@ export default function App() {
           onSetActiveTool={(tool) => setActiveTool(tool)}
           onImportDraggedType={draggedItemType}
           onResetDraggedType={handleResetDraggedType}
+          onAddGeneratedNodes={handleOnAddGeneratedNodes}
+          onReplaceNodes={handleReplaceNodes}
+          onUndo={handleUndo}
         />
 
         {/* RIGHT PROPERTY INSPECTOR PANEL (Design view only) */}
         {mode === 'design' && (
-          <RightSidebar
-            selectedNode={nodes.find((n) => n.id === selectedNodeId) || null}
-            selectedNodeIds={selectedNodeIds}
-            onSelectNodeIds={setSelectedNodeIds}
-            onBulkAlign={handleBulkAlign}
-            onBulkDelete={handleBulkDelete}
-            onBulkDuplicate={handleBulkDuplicate}
-            allNodes={nodes}
-            theme={theme}
-            onUpdateTheme={handleUpdateTheme}
-            onUpdateNode={handleUpdateNode}
-            onDeleteNode={handleDeleteNode}
-            onDuplicateNode={handleDuplicateNode}
-            onMoveUpInParent={handleMoveUpInParent}
-            onMoveDownInParent={handleMoveDownInParent}
-            onDetachFromParent={handleDetachFromParent}
-          />
+          <div className="flex shrink-0 h-full relative z-20">
+            {!rightSidebarCollapsed ? (
+              <div className="relative flex h-full">
+                {/* Small floating collapse handle button overlaying the boundary */}
+                <button
+                  type="button"
+                  onClick={() => setRightSidebarCollapsed(true)}
+                  className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-12 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 rounded-l-md flex items-center justify-center shadow-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors z-45 border-r-0"
+                  title="Collapse inspector"
+                  id="collapse-inspector-btn"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
+                <RightSidebar
+                  selectedNode={nodes.find((n) => n.id === selectedNodeId) || null}
+                  selectedNodeIds={selectedNodeIds}
+                  onSelectNodeIds={setSelectedNodeIds}
+                  onBulkAlign={handleBulkAlign}
+                  onBulkDelete={handleBulkDelete}
+                  onBulkDuplicate={handleBulkDuplicate}
+                  allNodes={nodes}
+                  theme={theme}
+                  onUpdateTheme={handleUpdateTheme}
+                  onUpdateNode={handleUpdateNode}
+                  onDeleteNode={handleDeleteNode}
+                  onDuplicateNode={handleDuplicateNode}
+                  onMoveUpInParent={handleMoveUpInParent}
+                  onMoveDownInParent={handleMoveDownInParent}
+                  onDetachFromParent={handleDetachFromParent}
+                />
+              </div>
+            ) : (
+              <div 
+                className="w-11 border-l border-zinc-200 dark:border-zinc-800 bg-[#ffffff] dark:bg-[#09090b] flex flex-col items-center pt-4 shrink-0 relative transition-all duration-200 animate-in fade-in slide-in-from-right-4"
+                id="collapsed-inspector-indicator"
+              >
+                <button
+                  type="button"
+                  onClick={() => setRightSidebarCollapsed(false)}
+                  className="w-7 h-7 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-lg flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all text-xs font-bold"
+                  title="Expand inspector"
+                >
+                  ⚙️
+                </button>
+                <div className="h-full flex items-center justify-center select-none pt-12 text-center">
+                  <span className="text-[9px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase leading-none transform rotate-90 origin-center whitespace-nowrap">
+                    INSPECTOR PANEL
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
       </div>

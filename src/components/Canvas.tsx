@@ -7,6 +7,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { CanvasNode, Viewport, ThemeSettings, ComponentType } from '../types';
 import { CanvasNodeRenderer } from './CanvasNode';
 import { TOOL_ITEMS } from '../componentsData';
+import { CanvasCopilot } from './CanvasCopilot';
 import { 
   ZoomIn, 
   ZoomOut, 
@@ -43,6 +44,11 @@ interface CanvasProps {
   onSetActiveTool: (tool: 'select' | 'pan') => void;
   onImportDraggedType: ComponentType | null;
   onResetDraggedType: () => void;
+  onAddGeneratedNodes: (nodes: CanvasNode[]) => void;
+  onReplaceNodes?: (nodes: CanvasNode[]) => void;
+  onUpdateTheme?: (theme: Partial<ThemeSettings>) => void;
+  onBulkDelete?: () => void;
+  onUndo?: () => void;
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -66,6 +72,11 @@ export const Canvas: React.FC<CanvasProps> = ({
   onSetActiveTool,
   onImportDraggedType,
   onResetDraggedType,
+  onAddGeneratedNodes,
+  onReplaceNodes,
+  onUpdateTheme,
+  onBulkDelete,
+  onUndo,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const playModeRef = useRef<HTMLDivElement>(null);
@@ -174,6 +185,36 @@ export const Canvas: React.FC<CanvasProps> = ({
       if (e.code === 'Space') {
         setSpacePressed(true);
       }
+
+      // Delete selected components on Backspace or Delete
+      if (mode === 'design' && (e.key === 'Backspace' || e.key === 'Delete')) {
+        const activeEl = document.activeElement;
+        const isInputActive = activeEl && (
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          (activeEl as any).isContentEditable ||
+          activeEl.getAttribute('contenteditable') === 'true'
+        );
+        if (!isInputActive && selectedNodeIds.length > 0 && onBulkDelete) {
+          e.preventDefault();
+          onBulkDelete();
+        }
+      }
+
+      // Handle Ctrl+Z or Cmd+Z Undo
+      if (mode === 'design' && (e.ctrlKey || e.metaKey) && e.key === 'z') {
+        const activeEl = document.activeElement;
+        const isInputActive = activeEl && (
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          (activeEl as any).isContentEditable ||
+          activeEl.getAttribute('contenteditable') === 'true'
+        );
+        if (!isInputActive && onUndo) {
+          e.preventDefault();
+          onUndo();
+        }
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -186,7 +227,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [mode, selectedNodeIds, onBulkDelete, onUndo]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (mode === 'play') return;
@@ -600,6 +641,9 @@ export const Canvas: React.FC<CanvasProps> = ({
               startResizeNode(e, node);
             }
           }}
+          allNodes={nodes}
+          onSelectNodeIds={onSelectNodeIds}
+          onUpdateNode={onUpdateNode}
         >
           {childrenNodesJSX.length > 0 ? childrenNodesJSX : undefined}
         </CanvasNodeRenderer>
@@ -645,7 +689,22 @@ export const Canvas: React.FC<CanvasProps> = ({
           <span className="hidden sm:inline">Hand Pan</span>
         </button>
       </div>
- 
+
+      {/* AI Layout Copilot Bar (floating centered at the bottom overlay, visible in design mode) */}
+      {mode === 'design' && (
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-[580px] px-4 pointer-events-none flex justify-center">
+          <CanvasCopilot
+            nodes={nodes}
+            viewport={viewport}
+            onAddGeneratedNodes={onAddGeneratedNodes}
+            onReplaceNodes={onReplaceNodes}
+            theme={theme}
+            onUpdateTheme={onUpdateTheme}
+            selectedNodeIds={selectedNodeIds}
+          />
+        </div>
+      )}
+
       {/* Mode status indicator badge overlay */}
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
         <div className={`px-2.5 py-1.5 rounded border flex items-center gap-1.5 leading-none text-[10px] font-bold tracking-widest uppercase transition-all backdrop-blur-md select-none border-zinc-200 bg-white/90 dark:border-zinc-800 dark:bg-zinc-950/90 ${

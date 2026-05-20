@@ -404,6 +404,92 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               </div>
             )}
 
+            {/* BRAND CUSTOM STYLING OVERRIDES */}
+            <div className="space-y-3.5 border-b border-slate-100 dark:border-slate-900 pb-4 pt-1">
+              <span className="text-[10px] font-bold text-slate-450 dark:text-slate-500 tracking-wider uppercase select-none flex items-center justify-between">
+                <span>Color & style overrides</span>
+                <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400 font-bold px-1.5 py-0.5 rounded leading-none">Canvas overrides</span>
+              </span>
+
+              <div className="space-y-3">
+                {/* Background color */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-450 flex items-center justify-between">
+                    <span>Background frame color</span>
+                    <span className="font-mono text-[9px] text-zinc-400">bgColor</span>
+                  </label>
+                  <select
+                    value={props.bgColor || ''}
+                    onChange={(e) => handlePropertyChange('bgColor', e.target.value)}
+                    className="w-full text-xs h-9 border border-slate-200 dark:border-slate-800 px-2 rounded-lg bg-white dark:bg-slate-900 focus:border-slate-400 focus:outline-none"
+                    id="bgColor-picker"
+                  >
+                    <option value="">Default theme-governed frame</option>
+                    <option value="white">Solid White panel</option>
+                    <option value="zinc">Cool Zinc frame (Soft-border)</option>
+                    <option value="slate">Slate Gray tone (Soft-border)</option>
+                    <option value="neutral">Warm Neutral frame (Soft-border)</option>
+                    <option value="stone">Warm Stone frame (Soft-border)</option>
+                    <option value="red">Cherry Red warning glow</option>
+                    <option value="green">Emerald Green success glow</option>
+                    <option value="blue">Celestial Blue information info</option>
+                    <option value="yellow">Golden Amber warning alert</option>
+                    <option value="purple">Cosmic Purple accent brand</option>
+                    <option value="orange">Mandarin Orange warm glow</option>
+                    <option value="teal">Minty Teal high-contrast</option>
+                    <option value="zincActive">Deep Solid Dark/Light inverse</option>
+                    <option value="indigoActive">Electric Indigo solid active</option>
+                  </select>
+                </div>
+
+                {/* Text Color overrides */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-450 flex items-center justify-between">
+                    <span>Forefront Text Color</span>
+                    <span className="font-mono text-[9px] text-zinc-400">textColor</span>
+                  </label>
+                  <select
+                    value={props.textColor || ''}
+                    onChange={(e) => handlePropertyChange('textColor', e.target.value)}
+                    className="w-full text-xs h-9 border border-slate-200 dark:border-slate-800 px-2 rounded-lg bg-white dark:bg-slate-900 focus:border-slate-400 focus:outline-none"
+                    id="textColor-picker"
+                  >
+                    <option value="">Default theme text coloring</option>
+                    <option value="dark">Standard High-contrast (Deep Charcoal/White)</option>
+                    <option value="zinc">Subtle Slate-gray indicator</option>
+                    <option value="red">Warning Alert Red Text</option>
+                    <option value="green">Success Emerald Green Text</option>
+                    <option value="blue">Information Royal Blue Text</option>
+                    <option value="yellow">Bright Amber Highlights Text</option>
+                    <option value="purple">Deep Royal Purple Typography</option>
+                    <option value="orange">Spicy Mandarin Orange Text</option>
+                    <option value="pink">Hot Magenta Pink Accent</option>
+                    <option value="teal">Clean Mint Teal type text</option>
+                    <option value="white">Forced Pure White</option>
+                  </select>
+                </div>
+
+                {/* Custom arbitrary Tailwind classes */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-450 flex items-center justify-between">
+                    <span>Custom Tailwind utilities</span>
+                    <span className="font-mono text-[9px] text-zinc-400">customClass</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={props.customClass || ''}
+                    onChange={(e) => handlePropertyChange('customClass', e.target.value)}
+                    placeholder="e.g. shadow-lg border-2 border-dashed border-sky-400 animate-pulse duration-1000 p-6 rotate-1 font-sans"
+                    className="w-full h-9 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-900 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-slate-400 focus:outline-none font-mono"
+                    id="customClass-input"
+                  />
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    Try entering standard styles (e.g. scale, duration, rotation, padding, flex elements, or shadow filters).
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* COMPONENT SPECIFIC DYNAMIC PARAMETERS */}
             <div className="space-y-3.5">
               <span className="text-[10px] font-bold text-slate-450 dark:text-slate-500 tracking-wider uppercase select-none">
