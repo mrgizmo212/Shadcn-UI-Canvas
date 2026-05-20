@@ -25,6 +25,107 @@ import {
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
+import { Checkbox } from './ui/checkbox';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from './ui/breadcrumb';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { AspectRatio } from './ui/aspect-ratio';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from './ui/carousel';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandSeparator,
+} from './ui/command';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from './ui/context-menu';
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from './ui/drawer';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from './ui/hover-card';
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from './ui/input-otp';
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink,
+} from './ui/navigation-menu';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from './ui/pagination';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
+import { ScrollArea } from './ui/scroll-area';
+import { SidebarProvider } from './ui/sidebar';
+import { Toggle } from './ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from './ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from './ui/dropdown-menu';
+import {
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarItem,
+  MenubarSeparator,
+} from './ui/menubar';
+import { Loader2 } from 'lucide-react';
+import { toast as toastImpl } from 'sonner';
 
 interface CanvasNodeProps {
   node: CanvasNode;
@@ -361,6 +462,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
         };
 
         const mapVariant = () => {
+          if (props.bgColor || props.textColor) return 'custom';
           if (props.variant === 'secondary') return 'secondary';
           if (props.variant === 'outline') return 'outline';
           if (props.variant === 'ghost') return 'ghost';
@@ -378,7 +480,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
           <Button
             onClick={handleBtnClick}
             disabled={props.disabled}
-            variant={mapVariant()}
+            variant={mapVariant() as any}
             size={mapSize()}
             className={`w-full h-full select-none cursor-pointer ${radius} ${getCustomStyleOverrides()}`}
           >
@@ -393,13 +495,13 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
             <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none text-left`}>
               {renderEditableText('label', 'Input Parameter', 'font-semibold text-xs')}
             </label>
-            <input
+            <Input
               type={props.type || 'text'}
               disabled={mode === 'design'}
               placeholder={props.placeholder || 'e.g. hello world'}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className={`flex h-9 w-full ${radius} border ${getThemeClass('border')} bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:${getThemeClass('textMuted')} focus-visible:ring-1 ${getThemeClass('ring')} dark:placeholder:${getThemeClass('textMuted')}`}
+              className={radius}
             />
           </div>
         );
@@ -411,13 +513,12 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
             <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none text-left`}>
               {renderEditableText('label', 'Description Textarea', 'font-semibold text-xs')}
             </label>
-            <textarea
+            <Textarea
               disabled={mode === 'design'}
               placeholder={props.placeholder || 'Type description contents here...'}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              rows={2}
-              className={`flex w-full ${radius} border ${getThemeClass('border')} bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:${getThemeClass('textMuted')} focus-visible:ring-1 ${getThemeClass('ring')} dark:placeholder:${getThemeClass('textMuted')}`}
+              className={radius}
             />
           </div>
         );
@@ -425,6 +526,7 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
       case 'badge': {
         const mapVariant = () => {
+          if (props.bgColor || props.textColor) return 'custom';
           if (props.variant === 'secondary') return 'secondary';
           if (props.variant === 'outline') return 'outline';
           if (props.variant === 'destructive') return 'destructive';
@@ -493,17 +595,13 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
 
         return (
           <div className="flex items-center space-x-2 py-1 select-none text-left">
-            <div
-              onClick={toggleCheck}
-              className={`peer h-4.5 w-4.5 shrink-0 rounded border ${getThemeClass('border')} flex items-center justify-center transition-all ${
-                isChecked 
-                  ? `${getThemeClass('bgActive')} ${getThemeClass('borderActive')} ${getThemeClass('textPrimaryBtn')}` 
-                  : 'bg-transparent text-transparent hover:border-zinc-400'
-              } ${mode === 'play' ? 'cursor-pointer' : ''}`}
-            >
-              {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </div>
-            <label className={`text-xs font-medium leading-tight ${getThemeClass('textBody')} ${mode === 'play' ? 'cursor-pointer' : ''}`}>
+            <Checkbox
+              checked={isChecked}
+              onCheckedChange={mode === 'play' ? setIsChecked : undefined}
+              disabled={mode !== 'play'}
+              id={`chk-${node.id}`}
+            />
+            <label htmlFor={`chk-${node.id}`} className={`text-xs font-medium leading-tight ${getThemeClass('textBody')} ${mode === 'play' ? 'cursor-pointer' : ''}`}>
               {renderEditableText('label', 'Form checkbox description', 'text-xs font-medium')}
             </label>
           </div>
@@ -522,37 +620,24 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
                 {renderEditableText('label', 'Choose plan tier:', 'text-xs font-semibold')}
               </span>
             )}
-            <div className="grid gap-2">
-              {optionsList.map((option, idx) => {
-                const isSelected = radioSelected === option || (!radioSelected && idx === 0);
-                const handleRadioClick = () => {
-                  if (mode === 'play') {
-                    setRadioSelected(option);
-                  }
-                };
-
-                return (
-                  <div
-                    key={idx}
-                    onClick={handleRadioClick}
-                    className={`flex items-center space-x-2.5 select-none ${mode === 'play' ? 'cursor-pointer' : ''}`}
-                  >
-                    <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center transition-all ${
-                      isSelected 
-                        ? `${getThemeClass('borderActive')} ring-1 ${getThemeClass('ring')}` 
-                        : `${getThemeClass('border')}`
-                    }`}>
-                      {isSelected && (
-                        <div className={`h-2.5 w-2.5 rounded-full ${getThemeClass('bgActive')}`} />
-                      )}
-                    </div>
-                    <span className={`text-sm font-medium ${getThemeClass('textBody')}`}>
-                      {option}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <RadioGroup
+              value={radioSelected || optionsList[0]}
+              onValueChange={mode === 'play' ? setRadioSelected : undefined}
+              disabled={mode !== 'play'}
+              className="grid gap-2"
+            >
+              {optionsList.map((option, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center space-x-2.5 select-none"
+                >
+                  <RadioGroupItem value={option} id={`rad-${node.id}-${idx}`} />
+                  <label htmlFor={`rad-${node.id}-${idx}`} className={`text-sm font-medium ${getThemeClass('textBody')} ${mode === 'play' ? 'cursor-pointer' : ''}`}>
+                    {option}
+                  </label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
         );
       }
@@ -1129,6 +1214,924 @@ export const CanvasNodeRenderer: React.FC<CanvasNodeProps> = ({
                 <span>Col Slot: Drag items here</span>
               </div>
             )}
+          </div>
+        );
+      }
+
+      case 'breadcrumb': {
+        const linksList = (props.links || 'Home, Components, Breadcrumb')
+          .split(',')
+          .map((t: string) => t.trim());
+        
+        return (
+          <div className="py-1 w-full text-left">
+            <Breadcrumb>
+              <BreadcrumbList>
+                {linksList.map((link, idx) => {
+                  const isLast = idx === linksList.length - 1;
+                  return (
+                    <React.Fragment key={idx}>
+                      <BreadcrumbItem>
+                        {isLast ? (
+                          <BreadcrumbPage>{link}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink href="#" onClick={(e) => { e.preventDefault(); if (mode === 'play') alert(`Navigating to ${link}`); }}>{link}</BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                      {!isLast && <BreadcrumbSeparator />}
+                    </React.Fragment>
+                  );
+                })}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        );
+      }
+
+      case 'popover': {
+        return (
+          <div className="py-1 w-full text-left">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  {renderEditableText('trigger', 'Configure Params', 'font-medium text-xs')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-4">
+                <h4 className="font-bold text-sm text-foreground mb-1">
+                  {renderEditableText('title', 'Edit Options', 'font-bold text-sm')}
+                </h4>
+                <p className="text-xs text-muted-foreground leading-normal">
+                  {renderEditableText('description', 'Set port parameters and database details.', 'text-xs', true)}
+                </p>
+                {mode === 'play' && (
+                  <div className="mt-3 flex gap-1 justify-end">
+                    <Button size="xs" onClick={() => alert('Configuration Saved')}>Save</Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
+        );
+      }
+
+      case 'tooltip': {
+        return (
+          <div className="py-1 w-full text-left">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full text-xs">
+                    {renderEditableText('trigger', 'Hover over me', 'font-medium text-xs')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{props.content || 'This action is highly persistent and cannot be undone!'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      }
+
+      case 'buttonGroup': {
+        const btns = (props.buttons || 'Left, Middle, Right').split(',').map((b: string) => b.trim());
+        return (
+          <div className="flex items-center -space-x-px py-1">
+            {btns.map((btn, idx) => {
+              const isActive = idx === (props.activeIndex ?? 0);
+              return (
+                <Button
+                  key={idx}
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    if (mode === 'play') {
+                      toastImpl.success(`Selected group option: ${btn}`);
+                    }
+                  }}
+                  className={`rounded-none first:rounded-l-md last:rounded-r-md text-xs`}
+                >
+                  {btn}
+                </Button>
+              );
+            })}
+          </div>
+        );
+      }
+
+      case 'inputGroup': {
+        return (
+          <div className="flex items-center -space-x-px w-full py-1">
+            {props.prefix && (
+              <span className="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-xs h-9">
+                {props.prefix}
+              </span>
+            )}
+            <Input
+              type="text"
+              disabled={mode === 'design'}
+              placeholder={props.placeholder || 'github.com'}
+              className="rounded-none first:rounded-l-md last:rounded-r-md flex-1 text-xs h-9"
+            />
+            {props.suffix && (
+              <span className="inline-flex items-center px-2.5 rounded-r-md border border-l-0 border-input bg-muted text-muted-foreground text-xs h-9">
+                {props.suffix}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      case 'inputOtp': {
+        const len = Number(props.length ?? 6);
+        const slots = Array.from({ length: len });
+        return (
+          <div className="py-1 flex justify-center text-left">
+            <InputOTP maxLength={len} value={props.value || '123'}>
+              <InputOTPGroup>
+                {slots.map((_, idx) => (
+                  <InputOTPSlot key={idx} index={idx} className="w-8 h-8 text-xs font-mono" />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+        );
+      }
+
+      case 'nativeSelect': {
+        const list = (props.options || 'United States, Canada, United Kingdom').split(',').map((o: string) => o.trim());
+        return (
+          <div className="grid w-full gap-1.5 p-1 text-left">
+            <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none`}>
+              {props.label || 'Country Option'}
+            </label>
+            <select
+              disabled={mode === 'design'}
+              className={`flex h-9 w-full ${radius} border border-input bg-transparent px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring`}
+            >
+              {list.map((opt, idx) => (
+                <option key={idx} value={opt} className="bg-background text-foreground text-xs">
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      }
+
+      case 'combobox': {
+        const list = (props.options || 'Next.js, React, Remix, Svelte, Vue').split(',').map((f: string) => f.trim());
+        return (
+          <div className="py-1 w-full text-left">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full text-xs justify-between font-normal">
+                  <span>{props.selected || 'Select option...'}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-52 p-0">
+                <Command className="p-1">
+                  <CommandInput placeholder={props.placeholder || 'Search options...'} className="h-8 text-xs" />
+                  <CommandList className="max-h-[160px] overflow-y-auto">
+                    <CommandEmpty className="py-2 text-center text-xs">No options found.</CommandEmpty>
+                    <CommandGroup>
+                      {list.map((framework, idx) => (
+                        <CommandItem
+                          key={idx}
+                          value={framework}
+                          onSelect={() => {
+                            if (mode === 'play') {
+                              toastImpl.success(`Selected option: ${framework}`);
+                            }
+                          }}
+                          className="flex items-center justify-between text-xs cursor-pointer p-1.5 hover:bg-muted font-medium"
+                        >
+                          <span>{framework}</span>
+                          {props.selected === framework && <Check className="h-3 w-3 text-primary-foreground" />}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+        );
+      }
+
+      case 'toggle': {
+        return (
+          <div className="py-1 text-left">
+            <Toggle
+              defaultPressed={!!props.isActive}
+              onPressedChange={(pressed) => {
+                if (mode === 'play') {
+                  toastImpl.info(`Toggle state changed: ${pressed}`);
+                }
+              }}
+              className="text-xs"
+            >
+              {props.label || 'Bold Text'}
+            </Toggle>
+          </div>
+        );
+      }
+
+      case 'toggleGroup': {
+        const list = (props.options || 'Left, Center, Right, Justify').split(',').map((o: string) => o.trim());
+        return (
+          <div className="py-1 text-left">
+            <ToggleGroup type="single" defaultValue={props.selected} className="justify-start gap-1">
+              {list.map((opt, idx) => (
+                <ToggleGroupItem
+                  value={opt}
+                  key={idx}
+                  className="text-xs px-2.5 h-8 font-normal cursor-pointer"
+                  onClick={() => {
+                    if (mode === 'play') {
+                      toastImpl.success(`Toggle Group component active: ${opt}`);
+                    }
+                  }}
+                >
+                  {opt}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        );
+      }
+
+      case 'kbd': {
+        return (
+          <kbd className="inline-flex items-center h-5 select-none rounded border border-input bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground leading-none">
+            {props.text || '⌘K'}
+          </kbd>
+        );
+      }
+
+      case 'spinner': {
+        const sizeMap: Record<string, string> = { sm: 'h-4 w-4', md: 'h-8 w-8', lg: 'h-12 w-12' };
+        const spinSize = sizeMap[props.size] || 'h-8 w-8';
+        const colorMap: Record<string, string> = {
+          muted: 'text-muted-foreground',
+          zinc: 'text-zinc-500 dark:text-zinc-400',
+          primary: 'text-primary',
+          sky: 'text-sky-500 dark:text-sky-450',
+          blue: 'text-blue-600 dark:text-blue-400',
+          indigo: 'text-indigo-600 dark:text-indigo-400',
+          purple: 'text-purple-600 dark:text-purple-400',
+          violet: 'text-violet-600 dark:text-violet-400',
+          pink: 'text-pink-600 dark:text-pink-400',
+          red: 'text-red-600 dark:text-red-400',
+          orange: 'text-orange-500 dark:text-orange-400',
+          amber: 'text-amber-500 dark:text-amber-400',
+          yellow: 'text-yellow-500 dark:text-yellow-400',
+          green: 'text-green-600 dark:text-green-400',
+          emerald: 'text-emerald-500 dark:text-emerald-400',
+          teal: 'text-teal-500 dark:text-teal-400',
+        };
+        const colorClass = colorMap[props.color] || 'text-muted-foreground';
+        return (
+          <div className="flex items-center justify-center py-2 h-full w-full">
+            <Loader2 className={`animate-spin ${colorClass} ${spinSize}`} />
+          </div>
+        );
+      }
+
+      case 'typography': {
+        const text = props.text || 'Visual Design Engine Framework';
+        const variant = props.variant || 'h2';
+
+        if (variant === 'h1') {
+          return <h1 className="text-2xl font-extrabold tracking-tight text-foreground leading-none text-left">{text}</h1>;
+        } else if (variant === 'h2') {
+          return <h2 className="text-xl font-bold tracking-tight text-foreground/90 pb-1 border-b border-muted leading-tight text-left">{text}</h2>;
+        } else if (variant === 'h3') {
+          return <h3 className="text-lg font-semibold tracking-tight text-foreground/80 leading-normal text-left">{text}</h3>;
+        } else if (variant === 'lead') {
+          return <p className="text-base text-muted-foreground leading-relaxed text-left">{text}</p>;
+        } else if (variant === 'code') {
+          return <code className="relative rounded bg-muted px-[0.3rem] py-[0.15rem] font-mono text-sm font-semibold select-all">{text}</code>;
+        }
+        return <p className="text-sm text-foreground/75 leading-normal text-left">{text}</p>;
+      }
+
+      case 'emptyState': {
+        return (
+          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-input rounded-lg text-center w-full h-full min-h-[140px] bg-background/5 text-left">
+            <Info className="h-7 w-7 text-muted-foreground mb-2" />
+            <span className="font-bold text-sm text-foreground mb-1">{props.title || 'No items created yet'}</span>
+            <p className="text-xs text-muted-foreground max-w-[280px] leading-relaxed mb-3">
+              {props.description || 'Get started by creating your first cluster configurations.'}
+            </p>
+            <Button size="xs" onClick={() => { if (mode === 'play') toastImpl.info('Simulated setup action triggered!'); }}>
+              {props.buttonLabel || 'Add Node Server'}
+            </Button>
+          </div>
+        );
+      }
+
+      case 'fieldContainer': {
+        return (
+          <div className="grid w-full gap-1 p-2 border border-input/40 rounded bg-muted/5 text-left">
+            <h4 className="text-xs font-semibold text-foreground leading-none flex items-center gap-1.5">
+              <span>{props.label || 'Security Settings passphrase'}</span>
+              <span className="text-destructive font-mono text-[9px]">*</span>
+            </h4>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              {props.description || 'Used for signing overall environment credentials.'}
+            </p>
+            <div className="h-8 rounded bg-muted/60 dark:bg-muted/30 border border-input border-dashed flex items-center px-2 text-[10px] text-slate-400 font-mono">
+              [ Field visual injection area ]
+            </div>
+            {props.helper && (
+              <span className="text-[9px] text-slate-400 font-medium leading-none mt-0.5">
+                ✦ Helper: {props.helper}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      case 'listItem': {
+        return (
+          <div className="flex items-start justify-between p-3 border border-input rounded-lg bg-background/20 shadow-sm w-full text-left">
+            <div className="grid gap-1 flex-1 min-w-0 pr-2">
+              <span className="font-bold text-xs text-foreground truncate">{props.title || 'Enable VPC Encryption'}</span>
+              <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                {props.description || 'Automatically route internal calls securely with wireguard endpoints.'}
+              </p>
+            </div>
+            {props.meta && (
+              <Badge variant="outline" className="text-[9px] h-4.5 px-1.5 shrink-0 whitespace-nowrap self-center bg-muted/50 border-input/60">
+                {props.meta}
+              </Badge>
+            )}
+          </div>
+        );
+      }
+
+      case 'datePicker': {
+        return (
+          <div className="grid w-full gap-1.5 p-1 text-left">
+            {props.label && (
+              <label className={`text-xs font-semibold leading-none ${getThemeClass('textMuted')} select-none`}>
+                {props.label}
+              </label>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={mode === 'design'}
+              onClick={() => {
+                if (mode === 'play') {
+                  toastImpl.success(`Calendar active date: ${props.selectedDate || '2026-05-20'}`);
+                }
+              }}
+              className="w-full text-xs justify-start text-left font-normal"
+            >
+              <CalendarIcon className="mr-2 h-3.5 w-3.5 opacity-70" />
+              <span>{props.selectedDate || '2026-05-20'}</span>
+            </Button>
+          </div>
+        );
+      }
+
+      case 'direction': {
+        const isRtl = props.dir === 'rtl';
+        return (
+          <div className="py-1 text-left">
+            <div className="flex items-center space-x-2 text-xs border border-input rounded-md px-2.5 py-1.5 max-w-xs bg-muted/10 leading-none h-9 justify-between">
+              <span className="text-muted-foreground font-medium">Text Layout alignment:</span>
+              <Badge variant="secondary" className="font-mono text-[9px] uppercase tracking-wider px-1">
+                {isRtl ? 'RTL ⟵' : 'LTR ⟶'}
+              </Badge>
+            </div>
+          </div>
+        );
+      }
+
+      case 'alertDialog': {
+        return (
+          <div className="py-1 text-left">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="w-full text-xs">
+                  {props.title || 'Launch Alert Gate'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-80 max-w-sm p-5">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-sm font-bold">{props.title || 'Are you absolutely sure?'}</AlertDialogTitle>
+                  <AlertDialogDescription className="text-xs leading-normal leading-relaxed text-muted-foreground">
+                    {props.description || 'This is highly destructive and cannot be unsaved.'}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="mt-4 gap-1 flex sm:justify-end">
+                  <AlertDialogCancel variant="outline" size="sm" className="text-xs h-8 px-3 rounded">{props.cancelLabel || 'Cancel'}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="text-xs h-8 px-3 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => {
+                      if (mode === 'play') toastImpl.error('Action executed successfully! Content purged.');
+                    }}
+                  >
+                    {props.confirmLabel || 'Proceed'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      }
+
+      case 'dataTable': {
+        const listHeaders = (props.headers || 'Key, Value').split(',').map((h: string) => h.trim());
+        const listRows = (props.rows || '').split('|').map((r: string) => r.split(',').map((c: string) => c.trim()));
+        return (
+          <div className="w-full py-1 text-left">
+            <div className="rounded-lg border border-input overflow-hidden bg-background shadow-xs">
+              {props.title && (
+                <div className="bg-muted/15 px-3.5 py-2.5 border-b border-input">
+                  <span className="font-bold text-[11px] tracking-tight uppercase text-muted-foreground">{props.title}</span>
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-input bg-muted/30 font-medium text-muted-foreground h-8">
+                      {listHeaders.map((head, idx) => (
+                        <th key={idx} className="px-3.5 text-[10px] font-bold tracking-wider uppercase">{head}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listRows.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="border-b border-input last:border-0 hover:bg-muted/5 h-8">
+                        {row.map((cell, cellIdx) => (
+                          <td key={cellIdx} className="px-3.5 text-foreground/80 font-medium text-[11px] truncate max-w-[200px]">{cell || '-'}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case 'drawer': {
+        return (
+          <div className="py-1 text-left">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  Menu Panel Bottom Drawer
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="p-4 rounded-t-xl max-w-sm mx-auto">
+                <DrawerHeader className="p-1">
+                  <DrawerTitle className="text-sm font-bold text-foreground">
+                    {props.title || 'Quick Actions Bar'}
+                  </DrawerTitle>
+                  <DrawerDescription className="text-xs text-muted-foreground">
+                    {props.description || 'Configure layout settings, restart services, or export code bundle.'}
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="py-4 space-y-2">
+                  <div className="p-3 border rounded border-border flex justify-between items-center text-xs">
+                    <span>Reboot Server Replicas</span>
+                    <Button size="xs" onClick={() => { if (mode === 'play') toastImpl.success('Server reboot sequences initiated!'); }}>Trigger</Button>
+                  </div>
+                </div>
+                <DrawerFooter className="p-1 gap-1 flex justify-end">
+                  <DrawerClose asChild>
+                    <button className="inline-flex items-center justify-center rounded-md border border-input bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-800 dark:text-slate-100 px-3.5 py-1 text-xs font-semibold h-8 select-none cursor-pointer">Close Panel</button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        );
+      }
+
+      case 'command': {
+        const groups = (props.groups || 'Suggestions, Settings').split(',').map((g: string) => g.trim());
+        const items = (props.items || 'Search nodes, Set color theme, Invite colleagues, Clear active layout')
+          .split(',')
+          .map((i: string) => i.trim());
+        return (
+          <div className="w-full text-left py-1">
+            <div className="rounded-lg border border-input shadow-sm bg-background overflow-hidden p-1 max-w-xs">
+              <Command className="rounded-lg">
+                <CommandInput placeholder={props.placeholder || 'Type command search...'} className="h-8 text-xs border-0 focus-visible:ring-0" />
+                <CommandList className="max-h-[140px] overflow-y-auto">
+                  <CommandEmpty className="py-2 text-center text-xs">No shortcuts located.</CommandEmpty>
+                  {groups.map((group, groupIdx) => (
+                    <CommandGroup key={groupIdx} heading={group} className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase px-1.5 py-1">
+                      {items.slice(groupIdx * 2, (groupIdx + 1) * 2).map((item, itemIdx) => (
+                        <CommandItem
+                          key={itemIdx}
+                          onSelect={() => {
+                            if (mode === 'play') toastImpl.info(`Fired command shortcut: ${item}`);
+                          }}
+                          className="flex items-center text-xs rounded p-1.5 hover:bg-muted font-medium cursor-pointer"
+                        >
+                          <span>{item}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+              </Command>
+            </div>
+          </div>
+        );
+      }
+
+      case 'contextMenu': {
+        const listItems = (props.items || 'Back, Reload widget, Export designs, Clear container nodes')
+          .split(',')
+          .map((i: string) => i.trim());
+        return (
+          <div className="py-1 text-left w-full h-full">
+            <ContextMenu>
+              <ContextMenuTrigger className="flex h-10 w-full items-center justify-center rounded-md border border-dashed border-input bg-muted/5 text-xs text-muted-foreground select-none">
+                {props.trigger || 'Right-click coordinates area'}
+              </ContextMenuTrigger>
+              <ContextMenuContent className="w-44 p-1">
+                {listItems.map((item, idx) => (
+                  <ContextMenuItem
+                    key={idx}
+                    onClick={() => {
+                      if (mode === 'play') toastImpl.info(`Invoked action from context-menu: ${item}`);
+                    }}
+                    className="text-xs p-1.5 rounded hover:bg-muted cursor-pointer"
+                  >
+                    {item}
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuContent>
+            </ContextMenu>
+          </div>
+        );
+      }
+
+      case 'dropdownMenu': {
+        const listItems = (props.items || 'Profile preferences, Active billing, Generate JSON, Terminate session')
+          .split(',')
+          .map((i: string) => i.trim());
+        return (
+          <div className="py-1 text-left">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full text-xs justify-between gap-2">
+                  <span>{props.trigger || 'Dropdown Actions'}</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48 p-1">
+                {listItems.map((item, idx) => {
+                  const isDestructive = item.toLowerCase().includes('terminate') || item.toLowerCase().includes('delete');
+                  return (
+                    <DropdownMenuItem
+                      key={idx}
+                      onClick={() => {
+                        if (mode === 'play') {
+                          if (isDestructive) toastImpl.error(`Triggered warnings for: ${item}`);
+                          else toastImpl.success(`Simulated dropdown clicked: ${item}`);
+                        }
+                      }}
+                      className={`text-xs p-1.5 rounded cursor-pointer ${isDestructive ? 'text-destructive focus:bg-destructive/10' : 'hover:bg-muted'}`}
+                    >
+                      {item}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      }
+
+      case 'menubar': {
+        const menus = (props.menus || 'File, Edit, Selection, View, Help').split(',').map((m: string) => m.trim());
+        return (
+          <div className="py-1 w-full text-left">
+            <Menubar className="border border-input rounded-md max-w-full justify-start h-9 p-1">
+              {menus.map((menu, idx) => (
+                <MenubarMenu key={idx}>
+                  <MenubarTrigger
+                    onClick={() => {
+                      if (mode === 'play') toastImpl.info(`Menubar expansion active: ${menu}`);
+                    }}
+                    className="text-[11px] font-semibold px-2 cursor-pointer rounded hover:bg-muted"
+                  >
+                    {menu}
+                  </MenubarTrigger>
+                </MenubarMenu>
+              ))}
+            </Menubar>
+          </div>
+        );
+      }
+
+      case 'navigationMenu': {
+        const trigger = props.trigger || 'Products';
+        const items = (props.items || 'AI Copilot, VPC secure, Global Sync').split(',').map((it: string) => it.trim());
+        return (
+          <div className="py-1 text-left w-full">
+            <NavigationMenu className="border border-input/60 rounded px-1 max-w-full">
+              <NavigationMenuList className="flex items-center h-8">
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    onClick={() => {
+                      if (mode === 'play') toastImpl.info(`Opened navigation triggers panel for: ${trigger}`);
+                    }}
+                    className="text-xs px-2 cursor-pointer h-7 rounded hover:bg-muted"
+                  >
+                    {trigger}
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent className="p-2 border rounded bg-background shadow-md">
+                    <ul className="grid w-48 gap-1">
+                      {items.map((item, idx) => (
+                        <li key={idx}>
+                          <NavigationMenuLink asChild>
+                            <a
+                              href="#"
+                              onClick={(e) => { e.preventDefault(); if (mode === 'play') toastImpl.success(`Navigating to ${item}`); }}
+                              className="block select-none rounded p-2 text-xs leading-none no-underline outline-none transition-colors hover:bg-muted hover:text-accent-foreground"
+                            >
+                              <div className="font-medium text-foreground">{item}</div>
+                              <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground mt-0.5">Explore standard specifications.</p>
+                            </a>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+        );
+      }
+
+      case 'pagination': {
+        const current = props.currentPage ?? 3;
+        const total = props.totalPages ?? 10;
+        return (
+          <div className="py-1 w-full text-center">
+            <Pagination>
+              <PaginationContent className="flex items-center gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (mode === 'play' && current > 1) toastImpl.info(`Going to Page ${current - 1}`); }}
+                    className="h-8 text-xs cursor-pointer"
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="text-xs font-semibold px-2">Page {current} of {total}</span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (mode === 'play' && current < total) toastImpl.info(`Going to Page ${current + 1}`); }}
+                    className="h-8 text-xs cursor-pointer"
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        );
+      }
+
+      case 'hoverCard': {
+        return (
+          <div className="py-1 text-left">
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Button variant="link" className="px-0 text-xs font-semibold hover:underline">
+                  {props.triggerText || '@radix_ui_framework'}
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64 p-3.5">
+                <div className="flex justify-between space-x-2 text-left">
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-bold">{props.title || 'Radix Primitives'}</h4>
+                    <p className="text-[10.5px] text-muted-foreground leading-normal font-medium leading-relaxed">
+                      {props.description || 'An open-source clean implementation of accessible React elements built for everyone.'}
+                    </p>
+                    <div className="flex items-center pt-1">
+                      <span className="text-[9px] text-muted-foreground font-mono">
+                        {props.joined || 'Joined December 2021'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        );
+      }
+
+      case 'resizable': {
+        return (
+          <div className="py-1 w-full h-full min-h-[90px] border border-input rounded-lg overflow-hidden bg-background">
+            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+              <ResizablePanel defaultSize={40} className="p-3 bg-muted/10">
+                <span className="text-[10px] font-semibold text-muted-foreground leading-tight truncate block">
+                  {props.leftLabel || 'Primary Sidebar Sidebar Navigation'}
+                </span>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={60} className="p-3 bg-background">
+                <span className="text-[10px] font-semibold text-foreground truncate block">
+                  {props.rightLabel || 'Core Visual Terminal View'}
+                </span>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        );
+      }
+
+      case 'aspectRatio': {
+        const ratioText = props.ratio || '16/9';
+        const ratioMap: Record<string, number> = { '16/9': 16 / 9, '4/3': 4 / 3, '1/1': 1 };
+        const ratioVal = ratioMap[ratioText] || 16/9;
+        return (
+          <div className="py-1 w-full text-left">
+            <div className="border border-input overflow-hidden rounded-lg bg-muted/20">
+              <AspectRatio ratio={ratioVal}>
+                <img
+                  src={props.imageSrc || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600'}
+                  alt="Aspect Preview image"
+                  referrerPolicy="no-referrer"
+                  className="rounded-md object-cover w-full h-full opacity-90"
+                />
+              </AspectRatio>
+            </div>
+          </div>
+        );
+      }
+
+      case 'carousel': {
+        const slides = (props.slides || 'First Slide, Second Slide, Third Slide').split(',').map((s: string) => s.trim());
+        return (
+          <div className="py-1 w-full flex items-center justify-center">
+            <Carousel className="w-full max-w-[210px]">
+              <CarouselContent>
+                {slides.map((slide, index) => (
+                  <CarouselItem key={index} className="flex flex-col items-center justify-center p-4 bg-muted/15 rounded-lg border border-input text-center h-20">
+                    <span className="text-xs font-bold text-foreground leading-tight">{slide}</span>
+                    <span className="text-[9px] text-muted-foreground mt-1">Slide {index + 1} of {slides.length}</span>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex gap-1.5 justify-end mt-1.5 pr-1">
+                <CarouselPrevious className="relative h-6 w-6 rounded-md left-0 translate-y-0" />
+                <CarouselNext className="relative h-6 w-6 rounded-md right-0 translate-y-0" />
+              </div>
+            </Carousel>
+          </div>
+        );
+      }
+
+      case 'chart': {
+        const dataset = (props.dataPoints || 'Mon, 40 | Tue, 60 | Wed, 45 | Thu, 80 | Fri, 55 | Sat, 90')
+          .split('|')
+          .map((pt: string) => {
+            const parts = pt.split(',');
+            return { name: (parts[0] || '').trim(), value: Number(parts[1] || '0') };
+          });
+        return (
+          <div className="w-full py-1 text-left">
+            <div className="rounded-lg border border-input bg-background/50 shadow-xs p-3">
+              {props.title && <h4 className="font-bold text-[10px] uppercase tracking-wider text-muted-foreground mb-2">{props.title}</h4>}
+              <div className="flex items-end justify-between h-20 gap-1 pt-2 border-b border-input">
+                {dataset.map((pt, idx) => {
+                  const maxVal = Math.max(...dataset.map(d => d.value), 1);
+                  const pctHeight = (pt.value / maxVal) * 100;
+                  return (
+                    <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group/bar">
+                      <div
+                        style={{ height: `${pctHeight}%` }}
+                        className={`w-full rounded-t-sm transition-all duration-300 ${props.type === 'area' ? 'bg-primary/20 hover:bg-primary/30 border-t-2 border-primary' : props.type === 'line' ? 'h-0.5 w-full bg-primary relative before:absolute before:size-1.5 before:rounded-full before:bg-primary before:-top-[2px] before:left-1/2' : 'bg-primary/80 hover:bg-primary'}`}
+                      />
+                      <span className="text-[9px] text-muted-foreground text-center font-mono mt-1 truncate max-w-full">{pt.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      case 'collapsible': {
+        return (
+          <div className="py-1 w-full text-left">
+            <Collapsible className="w-full border border-input rounded-md p-2">
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between cursor-pointer">
+                  <span className="text-xs font-bold text-foreground leading-tight">{props.title || 'View environment params'}</span>
+                  <ChevronDown className="h-4 w-4 opacity-70" />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <div className="rounded bg-muted/80 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                  {(props.content || 'DATABASE_REPLICAS=3 | VPC_SECURE_TUNNEL=true').split('|').map((line: string, idx: number) => (
+                    <div key={idx}>{line.trim()}</div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        );
+      }
+
+      case 'scrollArea': {
+        const lines = (props.content || 'Initializing...').split('|');
+        return (
+          <div className="py-1 w-full text-left h-24">
+            <ScrollArea className="h-full border border-input rounded-lg p-2.5 bg-muted/5 font-mono text-[10px]">
+              <div className="space-y-1.5">
+                {lines.map((line: string, idx: number) => (
+                  <div key={idx} className="truncate select-none text-slate-500 hover:text-foreground">
+                    ✦ {line.trim()}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        );
+      }
+
+      case 'sidebar': {
+        const items = (props.items || '📁 Files Explorer, 🛡️ Keys, 💬 Help').split(',').map((it: string) => it.trim());
+        return (
+          <div className="py-1 w-full h-full min-h-[160px] border border-input rounded-lg bg-background overflow-hidden text-left shadow-sm">
+            <aside className="w-full h-full flex flex-col bg-muted/20 border-r border-input p-2.5">
+              <h4 className="font-bold text-[10.5px] uppercase tracking-wider text-muted-foreground border-b border-input/50 pb-1.5 mb-2">
+                {props.title || 'Control Center'}
+              </h4>
+              <nav className="flex-1 space-y-1">
+                {items.map((it, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => { if (mode === 'play') toastImpl.info(`Clicked sidebar tab: ${it}`); }}
+                    className="flex h-7.5 items-center px-1.5 py-1 text-xs font-semibold rounded text-foreground/80 hover:bg-muted select-none cursor-pointer leading-none transition-all"
+                  >
+                    <span>{it}</span>
+                  </div>
+                ))}
+              </nav>
+            </aside>
+          </div>
+        );
+      }
+
+      case 'sonner': {
+        return (
+          <div className="py-1 text-left">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs font-semibold"
+              onClick={() => {
+                if (mode === 'play') {
+                  toastImpl.success(props.title || 'Action completed successfully!', {
+                    description: props.description || 'All configurations set on local workspace.',
+                  });
+                }
+              }}
+            >
+              {props.label || 'Trigger Toast Alert'}
+            </Button>
+          </div>
+        );
+      }
+
+      case 'toast': {
+        return (
+          <div className="py-1 text-left">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs font-semibold"
+              onClick={() => {
+                if (mode === 'play') {
+                  toastImpl.warning(props.title || 'Action warning alert!', {
+                    description: props.description || 'Ensure all parameters compile successfully.',
+                  });
+                }
+              }}
+            >
+              {props.label || 'Trigger Warning Toast'}
+            </Button>
           </div>
         );
       }

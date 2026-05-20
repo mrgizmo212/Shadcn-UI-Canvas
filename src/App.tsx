@@ -9,7 +9,7 @@ import { RightSidebar } from './components/RightSidebar';
 import { Canvas } from './components/Canvas';
 import { ExportModal } from './components/ExportModal';
 import { generateReactCode } from './codegen';
-import { LAYOUT_TEMPLATES, TOOL_ITEMS } from './componentsData';
+import { TOOL_ITEMS } from './componentsData';
 import { CanvasNode, Viewport, ThemeSettings, ComponentType } from './types';
 import { 
   Play, 
@@ -427,23 +427,7 @@ export default function App() {
     });
   };
 
-  // Load a complete responsive design template
-  const handleLoadTemplate = (name: string) => {
-    const template = LAYOUT_TEMPLATES.find((t) => t.name === name);
-    if (!template) return;
 
-    const confirmWipe = nodes.length === 0 || confirm('🚨 Warning: Loading this layout template will replace your current active canvas nodes. Continue?');
-    if (confirmWipe) {
-      const deepClonedNodes = template.nodes.map((n) => ({
-        ...n,
-        properties: { ...n.properties },
-      }));
-      setNodes(deepClonedNodes);
-      setSelectedNodeIds([]);
-      // Recenter camera viewport centered
-      setViewport({ x: 80, y: 30, zoom: 0.72 });
-    }
-  };
 
   // Clean wipe grid
   const handleWipeAll = () => {
@@ -679,7 +663,6 @@ export default function App() {
               <div className="relative flex h-full">
                 <LeftSidebar
                   onAddNode={(type) => handleAddNode(type)}
-                  onLoadTemplate={handleLoadTemplate}
                   onDragStartItem={handleDragStartItem}
                   nodesCount={nodes.length}
                 />

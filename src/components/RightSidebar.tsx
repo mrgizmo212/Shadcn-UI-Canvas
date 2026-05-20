@@ -1142,6 +1142,49 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 </>
               )}
 
+              {selectedNode.type === 'spinner' && (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-450">Spinner size</label>
+                    <select
+                      value={props.size || 'md'}
+                      onChange={(e) => handlePropertyChange('size', e.target.value)}
+                      className="w-full text-xs h-9 border border-slate-205 dark:border-slate-800 px-2 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    >
+                      <option value="sm">Small (16px)</option>
+                      <option value="md">Medium (32px)</option>
+                      <option value="lg">Large (48px)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-450">Spinner color</label>
+                    <select
+                      value={props.color || 'muted'}
+                      onChange={(e) => handlePropertyChange('color', e.target.value)}
+                      className="w-full text-xs h-9 border border-slate-205 dark:border-slate-800 px-2 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    >
+                      <option value="muted">Default Muted Gray</option>
+                      <option value="zinc">Cool Zinc/Charcoal</option>
+                      <option value="primary">App Theme Foreground</option>
+                      <option value="sky">Celestial Sky Blue</option>
+                      <option value="blue">Blue Energy</option>
+                      <option value="indigo">Electric Indigo</option>
+                      <option value="purple">Cosmic Purple</option>
+                      <option value="violet">Deep Violet</option>
+                      <option value="pink">Hot Magenta Pink</option>
+                      <option value="red">Cherry Alert Red</option>
+                      <option value="orange">Mandarin Orange</option>
+                      <option value="amber">Warm Amber Gold</option>
+                      <option value="yellow">Bright Yellow</option>
+                      <option value="green">Emerald Success Green</option>
+                      <option value="emerald">Vibrant Emerald</option>
+                      <option value="teal">Minty Teal</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
             </div>
           </div>
         ) : (
